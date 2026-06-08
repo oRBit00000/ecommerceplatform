@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+<body class="bg-body-tertiary">
+<nav class="navbar shadow-sm" style="background-color:#f7efe5;">
+    <div class="container">
+        <a class="navbar-brand fw-semibold text-primary" th:href="@{/mvc/admin/dashboard}">Admin Dashboard</a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary btn-sm" th:href="@{/mvc/products/search}">Storefront</a>
+            <a class="btn btn-primary btn-sm" th:href="@{/mvc/orders/admin}">Order Search</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container py-4">
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-warning" th:text="${errorMessage}"></div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center"><div class="card-body"><div class="text-secondary small">Categories</div><div class="display-6 fw-bold" th:text="${#lists.size(categories)}"></div></div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center"><div class="card-body"><div class="text-secondary small">Products</div><div class="display-6 fw-bold" th:text="${#lists.size(products)}"></div></div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center"><div class="card-body"><div class="text-secondary small">Orders</div><div class="display-6 fw-bold" th:text="${#lists.size(orders)}"></div></div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center"><div class="card-body"><div class="text-secondary small">Logins</div><div class="display-6 fw-bold" th:text="${#lists.size(audits)}"></div></div></div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white"><div class="d-flex justify-content-between align-items-center"><h2 class="h5 mb-0">Categories</h2><a class="btn btn-sm btn-primary" th:href="@{/mvc/categories/manage/new}">Add</a></div></div>
+                <div class="card-body">
+                    <div class="border rounded-3 p-3 mb-3" th:each="category : ${categories}">
+                        <div class="d-flex justify-content-between gap-2">
+                            <div>
+                                <div class="fw-semibold" th:text="${category.name}"></div>
+                                <div class="text-secondary small" th:text="${category.description}"></div>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a class="btn btn-outline-secondary btn-sm" th:href="@{/mvc/categories/manage/edit/{id}(id=${category.id})}">Edit</a>
+                                <form th:action="@{/mvc/categories/manage/delete}" method="post">
+                                    <input type="hidden" name="id" th:value="${category.id}">
+                                    <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white"><div class="d-flex justify-content-between align-items-center"><h2 class="h5 mb-0">Products</h2><a class="btn btn-sm btn-primary" th:href="@{/mvc/products/new}">Add</a></div></div>
+                <div class="card-body">
+                    <div class="border rounded-3 p-3 mb-3" th:each="product : ${products}">
+                        <div class="fw-semibold" th:text="${product.name}"></div>
+                        <div class="text-secondary small mb-3" th:text="${product.categoryName + ' - ' + #numbers.formatDecimal(product.price,1,2) + ' EUR'}"></div>
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-outline-secondary btn-sm" th:href="@{/mvc/products/edit/{id}(id=${product.id})}">Edit</a>
+                            <form th:action="@{/mvc/products/delete}" method="post">
+                                <input type="hidden" name="id" th:value="${product.id}">
+                                <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white"><h2 class="h5 mb-0">Login History</h2></div>
+                <div class="card-body">
+                    <div class="border rounded-3 p-3 mb-3" th:each="audit : ${audits}">
+                        <div class="fw-semibold" th:text="${audit.username}"></div>
+                        <div class="text-secondary small" th:text="${audit.ipAddress}"></div>
+                        <div class="text-secondary small" th:text="${audit.loggedInAt}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

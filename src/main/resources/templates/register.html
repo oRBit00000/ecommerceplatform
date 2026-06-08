@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Register</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+<body style="background-color:#f8f5f0;">
+<main class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-9 col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <h1 class="h3 mb-1">Create customer account</h1>
+                        <p class="text-secondary mb-0">Register first, then continue to checkout.</p>
+                    </div>
+
+                    <div th:if="${registrationError}" class="alert alert-danger" th:text="${registrationError}"></div>
+
+                    <form th:action="@{/register}" th:object="${registrationDTO}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label" for="username">Username</label>
+                            <input class="form-control" id="username" th:field="*{username}" placeholder="your_username">
+                            <div class="text-danger small" th:errors="*{username}"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="email">Email</label>
+                            <input class="form-control" id="email" th:field="*{email}" type="email" placeholder="name@example.com">
+                            <div class="text-danger small" th:errors="*{email}"></div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label" for="password">Password</label>
+                            <input class="form-control" id="password" th:field="*{password}" type="password" placeholder="Minimum 6 characters">
+                            <div class="text-danger small" th:errors="*{password}"></div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" type="submit">Register</button>
+                            <a class="btn btn-outline-primary" th:href="@{/login}">Back to Login</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>
