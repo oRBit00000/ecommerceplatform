@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PayPal Checkout</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+<body class="bg-body-tertiary d-flex align-items-center" style="min-height:100vh;">
+<main class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body p-5">
+                    <div class="badge mb-3" th:classappend="${paypalSuccess} ? ' text-bg-success' : ' text-bg-danger'"
+                         th:text="${paypalSuccess} ? 'Approved' : 'Not Completed'"></div>
+                    <h1 class="h4 mb-3" th:text="${paypalSuccess} ? 'PayPal payment completed' : 'PayPal payment not completed'">PayPal payment status</h1>
+                    <p class="text-secondary mb-0" th:text="${paypalMessage}"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<script th:inline="javascript">
+    const payload = {
+        type: 'paypal-checkout',
+        success: [[${paypalSuccess}]],
+        redirectUrl: [[${paypalRedirectUrl}]],
+        message: [[${paypalMessage}]]
+    };
+
+    if (globalThis.opener && !globalThis.opener.closed) {
+        globalThis.opener.postMessage(payload, globalThis.location.origin);
+        globalThis.close();
+    } else {
+        globalThis.location.href = payload.redirectUrl;
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Orders</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+<body class="bg-light">
+<main class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Purchase History</h1>
+            <p class="text-secondary mb-0">Review previous orders, payment methods, and purchased items.</p>
+        </div>
+        <a class="btn btn-outline-secondary" th:href="@{/mvc/products/search}">Back to Catalog</a>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-3" th:each="order : ${orders}">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
+                <div>
+                    <h2 class="h5 mb-1" th:text="'Order #' + ${order.id}">Order details</h2>
+                    <div class="text-secondary small" th:text="${order.createdAt}"></div>
+                </div>
+                <div class="text-end">
+                    <div class="badge text-bg-dark mb-1" th:text="${order.paymentMethod}"></div>
+                    <div class="fw-semibold" th:text="${#numbers.formatDecimal(order.totalAmount,1,2)} + ' EUR'"></div>
+                </div>
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item px-0" th:each="item : ${order.items}">
+                    <div class="d-flex justify-content-between">
+                        <span th:text="${item.productName} + ' x ' + ${item.quantity}"></span>
+                        <strong th:text="${#numbers.formatDecimal(item.totalPrice,1,2)} + ' EUR'"></strong>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="alert alert-secondary" th:if="${#lists.isEmpty(orders)}">No orders yet.</div>
+</main>
+</body>
+</html>
