@@ -24,6 +24,7 @@ public class UserRegistrationServiceImpl implements UserRegistrationService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    // Registers a new customer account with the default USER role.
     @Override
     public void registerCustomer(RegistrationDTO registrationDTO) {
         if (userRepository.findByName(registrationDTO.getUsername()).isPresent()) {

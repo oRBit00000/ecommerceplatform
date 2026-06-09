@@ -3,130 +3,45 @@ package hr.algebra.ecommerceplatform.controller.rest;
 import hr.algebra.ecommerceplatform.dto.AuthRequestDTO;
 import hr.algebra.ecommerceplatform.dto.JwtResponseDTO;
 import hr.algebra.ecommerceplatform.dto.RefreshTokenRequestDTO;
-import hr.algebra.ecommerceplatform.model.RefreshToken;
-import hr.algebra.ecommerceplatform.configuration.MvcAuthenticationSuccessHandler;
-import hr.algebra.ecommerceplatform.service.JwtService;
-import hr.algebra.ecommerceplatform.service.RefreshTokenService;
+import hr.algebra.ecommerceplatform.service.AuthService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/rest/auth")
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
-    private final RefreshTokenService refreshTokenService;
+    private final AuthService authService;
 
-    public AuthController(AuthenticationManager authenticationManager,
-                          JwtService jwtService,
-                          RefreshTokenService refreshTokenService) {
-        this.authenticationManager = authenticationManager;
-        this.jwtService = jwtService;
-        this.refreshTokenService = refreshTokenService;
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
+    // REST login: validates credentials and returns a fresh access/refresh token pair.
     @PostMapping("/login")
     public JwtResponseDTO authenticate(@Valid @RequestBody AuthRequestDTO authRequestDTO) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authRequestDTO.getUsername(), authRequestDTO.getPassword())
-        );
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(authentication.getName());
-        return JwtResponseDTO.builder()
-                .accessToken(jwtService.generateToken(authentication.getName()))
-                .refreshToken(refreshToken.getToken())
-                .build();
+        return authService.authenticate(authRequestDTO);
     }
 
+    // Refreshes tokens for API clients or refreshes the session token for the MVC browser flow.
     @PostMapping("/refresh")
     public JwtResponseDTO refreshToken(Authentication authentication,
                                        HttpSession session,
                                        @RequestBody(required = false) RefreshTokenRequestDTO refreshTokenRequestDTO) {
-        if (refreshTokenRequestDTO != null
-                && refreshTokenRequestDTO.getRefreshToken() != null
-                && !refreshTokenRequestDTO.getRefreshToken().isBlank()) {
-            RefreshToken refreshToken;
-            try {
-                refreshToken = refreshTokenService.findByToken(refreshTokenRequestDTO.getRefreshToken())
-                        .map(refreshTokenService::verifyExpiration)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token not found."));
-            } catch (IllegalStateException ex) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, ex.getMessage(), ex);
-            }
-
-            return JwtResponseDTO.builder()
-                    .accessToken(jwtService.generateToken(refreshToken.getUser().getName()))
-                    .refreshToken(refreshToken.getToken())
-                    .build();
-        }
-
-        if (authentication == null) {
-            return JwtResponseDTO.builder().build();
-        }
-
-        String currentAccessToken = (String) session.getAttribute(MvcAuthenticationSuccessHandler.SESSION_ACCESS_TOKEN_KEY);
-        if (currentAccessToken != null && jwtService.isTokenValid(currentAccessToken)) {
-            return JwtResponseDTO.builder()
-                    .accessToken(currentAccessToken)
-                    .build();
-        }
-
-        RefreshToken refreshToken;
-        try {
-            refreshToken = refreshTokenService.findByUsername(authentication.getName())
-                    .map(refreshTokenService::verifyExpiration)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token not found."));
-        } catch (IllegalStateException ex) {
-            terminateAuthenticatedSession(authentication, session);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, ex.getMessage(), ex);
-        } catch (ResponseStatusException ex) {
-            if (ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                terminateAuthenticatedSession(authentication, session);
-            }
-            throw ex;
-        }
-
-        String newAccessToken = jwtService.generateToken(refreshToken.getUser().getName());
-        session.setAttribute(MvcAuthenticationSuccessHandler.SESSION_ACCESS_TOKEN_KEY, newAccessToken);
-
-        return JwtResponseDTO.builder()
-                .accessToken(newAccessToken)
-                .build();
+        return authService.refreshToken(authentication, session, refreshTokenRequestDTO);
     }
 
-    private void terminateAuthenticatedSession(Authentication authentication, HttpSession session) {
-        if (authentication != null) {
-            refreshTokenService.deleteByUsername(authentication.getName());
-        }
-
-        SecurityContextHolder.clearContext();
-        session.invalidate();
-    }
-
+    // REST logout: deletes the provided refresh token and returns a simple success message.
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(@RequestBody(required = false) RefreshTokenRequestDTO refreshTokenRequestDTO) {
-        String refreshToken = refreshTokenRequestDTO != null ? refreshTokenRequestDTO.getRefreshToken() : null;
-        try {
-            if (refreshToken == null || refreshToken.isBlank()) {
-                throw new IllegalStateException("Refresh token is required.");
-            }
-            refreshTokenService.deleteByToken(refreshToken);
-            return ResponseEntity.ok(Map.of("message", "Logged out successfully."));
-        } catch (IllegalStateException ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
-        }
+        return authService.logout(refreshTokenRequestDTO);
     }
 
 }

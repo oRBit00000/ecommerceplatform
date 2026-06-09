@@ -16,6 +16,7 @@ public class MyUserDetailsService implements UserDetailsService {
         this.userRepository = userRepository;
     }
 
+    // Loads a user from the database and adapts it to Spring Security's UserDetails format.
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByName(username)

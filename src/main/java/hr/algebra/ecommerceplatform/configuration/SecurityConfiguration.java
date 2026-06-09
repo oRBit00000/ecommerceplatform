@@ -40,6 +40,7 @@ public class SecurityConfiguration {
         this.mvcLogoutHandler = mvcLogoutHandler;
     }
 
+    // Defines which routes are public, which need roles, and how MVC vs REST auth failures are handled.
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -74,11 +75,13 @@ public class SecurityConfiguration {
         return configuration.getAuthenticationManager();
     }
 
+    // Uses BCrypt for password hashing and login verification.
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // Returns JSON 401 for anonymous access to protected REST endpoints.
     private AuthenticationEntryPoint restAuthenticationEntryPoint() {
         return (request, response, authException) -> writeJsonError(
                 response,
@@ -88,6 +91,7 @@ public class SecurityConfiguration {
         );
     }
 
+    // Returns JSON 403 when the user is logged in but does not have the required role.
     private AccessDeniedHandler restAccessDeniedHandler() {
         return (request, response, accessDeniedException) -> writeJsonError(
                 response,
@@ -97,6 +101,7 @@ public class SecurityConfiguration {
         );
     }
 
+    // Writes a small JSON error body so REST clients get API-friendly responses instead of HTML.
     private void writeJsonError(jakarta.servlet.http.HttpServletResponse response,
                                 HttpStatus status,
                                 String error,
