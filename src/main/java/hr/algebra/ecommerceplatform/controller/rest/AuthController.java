@@ -10,6 +10,7 @@ import hr.algebra.ecommerceplatform.service.RefreshTokenService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/rest/auth")
@@ -114,13 +116,14 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public void logout(@RequestBody(required = false) RefreshTokenRequestDTO refreshTokenRequestDTO) {
+    public ResponseEntity<Map<String, String>> logout(@RequestBody(required = false) RefreshTokenRequestDTO refreshTokenRequestDTO) {
         String refreshToken = refreshTokenRequestDTO != null ? refreshTokenRequestDTO.getRefreshToken() : null;
         try {
             if (refreshToken == null || refreshToken.isBlank()) {
                 throw new IllegalStateException("Refresh token is required.");
             }
             refreshTokenService.deleteByToken(refreshToken);
+            return ResponseEntity.ok(Map.of("message", "Logged out successfully."));
         } catch (IllegalStateException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
         }
