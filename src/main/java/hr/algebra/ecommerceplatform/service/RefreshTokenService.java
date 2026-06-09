@@ -29,7 +29,10 @@ public class RefreshTokenService {
     }
 
     public RefreshToken createRefreshToken(String username) {
-        refreshTokenRepository.deleteByUser_Name(username);
+        refreshTokenRepository.findByUser_Name(username).ifPresent(existingToken -> {
+            refreshTokenRepository.delete(existingToken);
+            refreshTokenRepository.flush();
+        });
 
         User user = userRepository.findByName(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));

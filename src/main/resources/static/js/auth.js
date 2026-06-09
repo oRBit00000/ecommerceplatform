@@ -1,4 +1,8 @@
 const AuthClient = (() => {
+    function handleSessionExpired() {
+        window.location.assign('/login?expired');
+    }
+
     async function refreshSessionToken() {
         const response = await fetch('/rest/auth/refresh', {
             method: 'POST',
@@ -6,6 +10,7 @@ const AuthClient = (() => {
         });
 
         if (response.status === 401) {
+            handleSessionExpired();
             throw new Error('Session expired. Please log in again.');
         }
     }
@@ -19,10 +24,17 @@ const AuthClient = (() => {
             }
         }
 
-        return fetch(url, {
+        const response = await fetch(url, {
             ...options,
             credentials: 'same-origin'
         });
+
+        if (response.status === 401 && options.allowAnonymous !== true) {
+            handleSessionExpired();
+            throw new Error('Session expired. Please log in again.');
+        }
+
+        return response;
     }
 
     function startAutoRefresh() {
