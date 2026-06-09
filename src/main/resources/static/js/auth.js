@@ -1,8 +1,10 @@
 const AuthClient = (() => {
+    // Sends the browser back to login when the authenticated session can no longer be refreshed.
     function handleSessionExpired() {
-        window.location.assign('/login?expired');
+        globalThis.location.assign('/login?expired');
     }
 
+    // Calls the refresh endpoint before protected frontend actions.
     async function refreshSessionToken() {
         const response = await fetch('/rest/auth/refresh', {
             method: 'POST',
@@ -15,6 +17,7 @@ const AuthClient = (() => {
         }
     }
 
+    // Wraps fetch so protected requests try to refresh the session first.
     async function sessionAwareFetch(url, options = {}) {
         try {
             await refreshSessionToken();
@@ -37,6 +40,7 @@ const AuthClient = (() => {
         return response;
     }
 
+    // Periodically refreshes the browser session while the page is open.
     function startAutoRefresh() {
         const fifteenMinutes = 15 * 60 * 1000;
         setInterval(() => {

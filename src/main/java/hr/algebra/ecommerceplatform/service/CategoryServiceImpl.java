@@ -19,6 +19,7 @@ public class CategoryServiceImpl implements CategoryService {
         this.productRepository = productRepository;
     }
 
+    // Returns all categories as DTOs.
     @Override
     public List<CategoryDTO> findAll() {
         return categoryRepository.findAll().stream()
@@ -26,16 +27,19 @@ public class CategoryServiceImpl implements CategoryService {
                 .toList();
     }
 
+    // Finds a single category by id.
     @Override
     public Optional<CategoryDTO> findById(Long id) {
         return categoryRepository.findById(id).map(this::toDTO);
     }
 
+    // Saves a new category.
     @Override
     public CategoryDTO save(CategoryDTO categoryDTO) {
         return toDTO(categoryRepository.save(new Category(categoryDTO.getName(), categoryDTO.getDescription())));
     }
 
+    // Updates an existing category.
     @Override
     public CategoryDTO update(Long id, CategoryDTO categoryDTO) {
         Category category = categoryRepository.findById(id)
@@ -45,6 +49,7 @@ public class CategoryServiceImpl implements CategoryService {
         return toDTO(categoryRepository.save(category));
     }
 
+    // Deletes a category only if no products still belong to it.
     @Override
     public void deleteById(Long id) {
         if (productRepository.countByCategoryId(id) > 0) {
@@ -53,6 +58,7 @@ public class CategoryServiceImpl implements CategoryService {
         categoryRepository.deleteById(id);
     }
 
+    // Converts a category entity into a DTO.
     private CategoryDTO toDTO(Category category) {
         return new CategoryDTO(category.getId(), category.getName(), category.getDescription());
     }

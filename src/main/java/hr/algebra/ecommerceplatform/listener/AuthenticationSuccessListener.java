@@ -24,6 +24,7 @@ public class AuthenticationSuccessListener {
         this.requestProvider = requestProvider;
     }
 
+    // Records a login audit entry whenever authentication succeeds during a web request.
     @EventListener
     @Transactional
     public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {

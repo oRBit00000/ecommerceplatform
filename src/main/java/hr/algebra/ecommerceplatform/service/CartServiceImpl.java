@@ -25,6 +25,7 @@ public class CartServiceImpl implements CartService {
         this.productRepository = productRepository;
     }
 
+    // Builds the current cart summary from the session cart contents.
     @Override
     public CartSummaryDTO getCartSummary() {
         Map<Long, Integer> cart = getCart();
@@ -53,6 +54,7 @@ public class CartServiceImpl implements CartService {
         return new CartSummaryDTO(items, totalItems, totalPrice);
     }
 
+    // Adds a product to the session cart and merges quantities if it is already present.
     @Override
     public void addProduct(Long productId, Integer quantity) {
         if (quantity == null || quantity < 1) {
@@ -65,6 +67,7 @@ public class CartServiceImpl implements CartService {
         getSession().setAttribute(Constants.CART_SESSION_KEY, cart);
     }
 
+    // Updates the quantity of a single cart item or removes it if the quantity is invalid.
     @Override
     public void updateQuantity(Long productId, Integer quantity) {
         Map<Long, Integer> cart = getCart();
@@ -77,6 +80,7 @@ public class CartServiceImpl implements CartService {
         getSession().setAttribute(Constants.CART_SESSION_KEY, cart);
     }
 
+    // Removes one product from the session cart.
     @Override
     public void removeProduct(Long productId) {
         Map<Long, Integer> cart = getCart();
@@ -84,11 +88,13 @@ public class CartServiceImpl implements CartService {
         getSession().setAttribute(Constants.CART_SESSION_KEY, cart);
     }
 
+    // Clears the entire session cart.
     @Override
     public void clearCart() {
         getSession().setAttribute(Constants.CART_SESSION_KEY, new LinkedHashMap<Long, Integer>());
     }
 
+    // Returns the session cart map and creates it when it does not exist yet.
     @SuppressWarnings("unchecked")
     private Map<Long, Integer> getCart() {
         Object cartObject = getSession().getAttribute(Constants.CART_SESSION_KEY);
@@ -100,10 +106,12 @@ public class CartServiceImpl implements CartService {
         return cart;
     }
 
+    // Returns the current HTTP session used to store the cart.
     private HttpSession getSession() {
         return sessionProvider.getObject();
     }
 
+    // Checks whether the requested quantity is available in stock.
     private void validateStock(Long productId, Integer requestedQuantity) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found."));

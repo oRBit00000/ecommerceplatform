@@ -36,18 +36,21 @@ public class OrderServiceImpl implements OrderService {
         this.cartService = cartService;
     }
 
+    // Completes a normal checkout using the selected payment method.
     @Override
     @Transactional
     public OrderDTO checkout(String username, CheckoutForm checkoutForm) {
         return createOrder(username, checkoutForm.getPaymentMethod());
     }
 
+    // Completes checkout after a PayPal payment is approved.
     @Override
     @Transactional
     public OrderDTO checkoutWithPaypal(String username, String paypalOrderId) {
         return createOrder(username, PaymentMethod.PAYPAL);
     }
 
+    // Creates the order, validates stock, saves items, and clears the cart.
     private OrderDTO createOrder(String username, PaymentMethod paymentMethod) {
         CartSummaryDTO cartSummary = cartService.getCartSummary();
         if (cartSummary.getItems().isEmpty()) {
@@ -87,6 +90,7 @@ public class OrderServiceImpl implements OrderService {
         return toDTO(savedOrder);
     }
 
+    // Returns the order history for one customer.
     @Override
     public List<OrderDTO> findOrdersForCustomer(String username) {
         return orderRepository.findAll().stream()
@@ -96,6 +100,7 @@ public class OrderServiceImpl implements OrderService {
                 .toList();
     }
 
+    // Returns admin order history filtered by username and date range.
     @Override
     public List<OrderDTO> searchAllOrders(OrderSearchForm orderSearchForm) {
         LocalDateTime from = orderSearchForm.getDateFrom() == null
@@ -115,6 +120,7 @@ public class OrderServiceImpl implements OrderService {
                 .toList();
     }
 
+    // Converts a purchase order entity into an order DTO.
     private OrderDTO toDTO(PurchaseOrder order) {
         List<OrderItemDTO> itemDTOs = order.getItems().stream()
                 .map(item -> new OrderItemDTO(

@@ -12,7 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequestMapping("/mvc/admin")
-public class AdminMvcController {
+public class
+AdminMvcController {
 
     private final ProductService productService;
     private final CategoryService categoryService;

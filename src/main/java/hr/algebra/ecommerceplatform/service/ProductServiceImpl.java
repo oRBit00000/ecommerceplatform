@@ -22,6 +22,7 @@ public class ProductServiceImpl implements ProductService {
         this.categoryRepository = categoryRepository;
     }
 
+    // Returns all products as DTOs.
     @Override
     public List<ProductDTO> findAll() {
         return productRepository.findAll().stream()
@@ -29,11 +30,13 @@ public class ProductServiceImpl implements ProductService {
                 .toList();
     }
 
+    // Finds one product by id.
     @Override
     public Optional<ProductDTO> findById(Long id) {
         return productRepository.findById(id).map(this::toDTO);
     }
 
+    // Finds products whose names match the search text.
     @Override
     public List<ProductDTO> findByName(String name) {
         return productRepository.findByNameContainingIgnoreCase(name).stream()
@@ -41,6 +44,7 @@ public class ProductServiceImpl implements ProductService {
                 .toList();
     }
 
+    // Finds products belonging to the given category name.
     @Override
     public List<ProductDTO> findByCategory(String category) {
         return productRepository.findByCategoryNameIgnoreCase(category).stream()
@@ -48,11 +52,13 @@ public class ProductServiceImpl implements ProductService {
                 .toList();
     }
 
+    // Saves a new product.
     @Override
     public ProductDTO save(ProductDTO product) {
         return toDTO(productRepository.save(toEntity(product)));
     }
 
+    // Updates an existing product.
     @Override
     public ProductDTO update(Long id, ProductDTO product) {
         Product existing = productRepository.findById(id)
@@ -69,11 +75,13 @@ public class ProductServiceImpl implements ProductService {
         return toDTO(productRepository.save(existing));
     }
 
+    // Deletes a product by id.
     @Override
     public void deleteById(Long id) {
         productRepository.deleteById(id);
     }
 
+    // Searches products using the dynamic filter form values.
     @Override
     public List<ProductDTO> findBySearchCriteria(ProductSearchForm productSearchForm) {
         return productRepository.findAll(
@@ -86,11 +94,13 @@ public class ProductServiceImpl implements ProductService {
                 .toList();
     }
 
+    // Returns the distinct category names used by current products.
     @Override
     public List<String> findProductCategories() {
         return productRepository.findDistinctCategories();
     }
 
+    // Converts a product entity into a DTO.
     private ProductDTO toDTO(Product product) {
         return new ProductDTO(
                 product.getId(),
@@ -103,6 +113,7 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
+    // Converts a product DTO into a new entity.
     private Product toEntity(ProductDTO productDTO) {
         Category category = getCategory(productDTO.getCategoryId());
         return new Product(
@@ -114,6 +125,7 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
+    // Loads the category referenced by the product DTO.
     private Category getCategory(Long categoryId) {
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found: " + categoryId));

@@ -46,20 +46,24 @@ public class PaypalService {
         this.httpClient = HttpClient.newHttpClient();
     }
 
+    // Returns the configured PayPal client id.
     public String getClientId() {
         return clientId;
     }
 
+    // Returns the correct PayPal Web SDK URL for sandbox or production mode.
     public String getWebSdkUrl() {
         return baseUrl != null && baseUrl.contains("sandbox")
                 ? "https://www.sandbox.paypal.com/web-sdk/v6/core"
                 : "https://www.paypal.com/web-sdk/v6/core";
     }
 
+    // Checks whether the required PayPal credentials are configured.
     public boolean isConfigured() {
         return clientId != null && !clientId.isBlank() && clientSecret != null && !clientSecret.isBlank();
     }
 
+    // Requests a browser-safe PayPal client token for frontend SDK usage.
     public String generateBrowserSafeClientToken() {
         ensureConfigured();
         String accessToken = fetchAccessToken();
@@ -92,6 +96,7 @@ public class PaypalService {
         }
     }
 
+    // Creates a PayPal order and returns its id together with the approval URL.
     public PaypalOrderResponseDTO createOrder(String appBaseUrl) {
         ensureConfigured();
         CartSummaryDTO cartSummary = cartService.getCartSummary();
@@ -142,6 +147,7 @@ public class PaypalService {
         }
     }
 
+    // Captures an approved PayPal order.
     public void captureOrder(String orderId) {
         ensureConfigured();
         String accessToken = fetchAccessToken();
@@ -165,6 +171,7 @@ public class PaypalService {
         }
     }
 
+    // Fetches an OAuth access token from PayPal before calling protected PayPal APIs.
     private String fetchAccessToken() {
         String credentials = Base64.getEncoder()
                 .encodeToString((clientId + ":" + clientSecret).getBytes(StandardCharsets.UTF_8));
@@ -188,6 +195,7 @@ public class PaypalService {
         }
     }
 
+    // Builds the JSON body sent to PayPal when creating an order.
     private String buildCreateOrderPayload(BigDecimal totalAmount, String appBaseUrl) {
         return """
                 {
@@ -220,6 +228,7 @@ public class PaypalService {
         );
     }
 
+    // Stops PayPal actions early when credentials are missing.
     private void ensureConfigured() {
         if (!isConfigured()) {
             throw new IllegalStateException("PayPal sandbox credentials are not configured.");
