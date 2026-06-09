@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,9 +55,14 @@ public class AuthController {
         if (refreshTokenRequestDTO != null
                 && refreshTokenRequestDTO.getRefreshToken() != null
                 && !refreshTokenRequestDTO.getRefreshToken().isBlank()) {
-            RefreshToken refreshToken = refreshTokenService.findByToken(refreshTokenRequestDTO.getRefreshToken())
-                    .map(refreshTokenService::verifyExpiration)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token not found."));
+            RefreshToken refreshToken;
+            try {
+                refreshToken = refreshTokenService.findByToken(refreshTokenRequestDTO.getRefreshToken())
+                        .map(refreshTokenService::verifyExpiration)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token not found."));
+            } catch (IllegalStateException ex) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, ex.getMessage(), ex);
+            }
 
             return JwtResponseDTO.builder()
                     .accessToken(jwtService.generateToken(refreshToken.getUser().getName()))
@@ -65,7 +71,7 @@ public class AuthController {
         }
 
         if (authentication == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated.");
+            return JwtResponseDTO.builder().build();
         }
 
         String currentAccessToken = (String) session.getAttribute(MvcAuthenticationSuccessHandler.SESSION_ACCESS_TOKEN_KEY);
@@ -75,9 +81,20 @@ public class AuthController {
                     .build();
         }
 
-        RefreshToken refreshToken = refreshTokenService.findByUsername(authentication.getName())
-                .map(refreshTokenService::verifyExpiration)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token not found."));
+        RefreshToken refreshToken;
+        try {
+            refreshToken = refreshTokenService.findByUsername(authentication.getName())
+                    .map(refreshTokenService::verifyExpiration)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token not found."));
+        } catch (IllegalStateException ex) {
+            terminateAuthenticatedSession(authentication, session);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, ex.getMessage(), ex);
+        } catch (ResponseStatusException ex) {
+            if (ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                terminateAuthenticatedSession(authentication, session);
+            }
+            throw ex;
+        }
 
         String newAccessToken = jwtService.generateToken(refreshToken.getUser().getName());
         session.setAttribute(MvcAuthenticationSuccessHandler.SESSION_ACCESS_TOKEN_KEY, newAccessToken);
@@ -85,6 +102,15 @@ public class AuthController {
         return JwtResponseDTO.builder()
                 .accessToken(newAccessToken)
                 .build();
+    }
+
+    private void terminateAuthenticatedSession(Authentication authentication, HttpSession session) {
+        if (authentication != null) {
+            refreshTokenService.deleteByUsername(authentication.getName());
+        }
+
+        SecurityContextHolder.clearContext();
+        session.invalidate();
     }
 
     @PostMapping("/logout")
